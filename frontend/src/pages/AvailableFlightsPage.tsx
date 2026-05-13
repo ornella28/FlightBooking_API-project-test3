@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import type { Flight } from "../types";
 
@@ -44,6 +45,9 @@ function AvailableFlightsPage() {
                     <p>Departure: {flight.departureTime}</p>
                     <p>Arrival: {flight.arrivalTime}</p>
                     <p>Available seats: {flight.availableSeats}</p>
+                    <Link to={`/book-flight/${flight.id}`}>
+                        <button>Book this flight</button>
+                    </Link>
                 </div>
             ))}
         </div>
