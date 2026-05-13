@@ -1,17 +1,20 @@
+import { BrowserRouter, Routes, Route } from "react-router";
+import Navbar from "./components/Navbar";
 import FlightsPage from "./pages/FlightsPages.tsx";
 import AvailableFlightsPage from "./pages/AvailableFlightsPage";
 
 function App() {
   return (
-      <div>
+      <BrowserRouter>
         <h1>Flight Reservation System</h1>
 
-        <FlightsPage />
+        <Navbar />
 
-        <hr />
-
-        <AvailableFlightsPage />
-      </div>
+        <Routes>
+          <Route path="/" element={<FlightsPage />} />
+          <Route path="/available-flights" element={<AvailableFlightsPage />} />
+        </Routes>
+      </BrowserRouter>
   );
 }
 
