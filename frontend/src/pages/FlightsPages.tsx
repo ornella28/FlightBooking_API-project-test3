@@ -40,12 +40,14 @@ function FlightsPage() {
             {flights.map((flight) => (
                 <div key={flight.id}>
                     <h3>
-                        {flight.origin} → {flight.destination}
+                        {flight.destination}
                     </h3>
                     <p>Flight number: {flight.flightNumber}</p>
+                    <p>Destination: {flight.destination}</p>
                     <p>Departure: {flight.departureTime}</p>
                     <p>Arrival: {flight.arrivalTime}</p>
-                    <p>Available seats: {flight.availableSeats}</p>
+                    <p>Price: {flight.price}</p>
+                    <p>Status: {flight.status}</p>
                 </div>
             ))}
         </div>

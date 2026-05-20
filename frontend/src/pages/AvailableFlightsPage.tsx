@@ -38,13 +38,14 @@ function AvailableFlightsPage() {
 
             {flights.map((flight) => (
                 <div key={flight.id}>
-                    <h3>
-                        {flight.origin} → {flight.destination}
-                    </h3>
+                    <h3>{flight.destination}</h3>
+
                     <p>Flight number: {flight.flightNumber}</p>
                     <p>Departure: {flight.departureTime}</p>
                     <p>Arrival: {flight.arrivalTime}</p>
-                    <p>Available seats: {flight.availableSeats}</p>
+                    <p>Price: {flight.price}</p>
+                    <p>Status: {flight.status}</p>
+
                     <Link to={`/book-flight/${flight.id}`}>
                         <button>Book this flight</button>
                     </Link>
