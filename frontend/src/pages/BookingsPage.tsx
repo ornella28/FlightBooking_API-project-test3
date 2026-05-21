@@ -51,7 +51,7 @@ function BookingsPage() {
                 <button type="submit">Search</button>
             </form>
 
-            {message && <p>{message}</p>}
+            {message && <p className="message">{message}</p>}
 
             {bookings.map((booking) => (
                 <div key={booking.id}>

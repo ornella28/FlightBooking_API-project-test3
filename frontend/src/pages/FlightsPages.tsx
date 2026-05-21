@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import type { Flight } from "../types";
 
+function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
 function FlightsPage() {
     const [flights, setFlights] = useState<Flight[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,21 +45,24 @@ function FlightsPage() {
 
     return (
         <div>
-            <h2>All Flights</h2>
+            <h2 className="page-title">All Flights</h2>
 
-            {flights.map((flight) => (
-                <div key={flight.id}>
-                    <h3>
-                        {flight.destination}
-                    </h3>
-                    <p>Flight number: {flight.flightNumber}</p>
-                    <p>Destination: {flight.destination}</p>
-                    <p>Departure: {flight.departureTime}</p>
-                    <p>Arrival: {flight.arrivalTime}</p>
-                    <p>Price: {flight.price}</p>
-                    <p>Status: {flight.status}</p>
-                </div>
-            ))}
+            <div className="card-grid">
+                {flights.map((flight) => (
+                    <div className="card" key={flight.id}>
+                        <h3>{flight.destination}</h3>
+
+                        <p>Flight number: {flight.flightNumber}</p>
+                        <p>Departure: {formatDate(flight.departureTime)}</p>
+                        <p>Arrival: {formatDate(flight.arrivalTime)}</p>
+                        <p>Price: {flight.price} kr</p>
+
+                        <p>
+                            Status: <span className="status">{flight.status}</span>
+                        </p>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

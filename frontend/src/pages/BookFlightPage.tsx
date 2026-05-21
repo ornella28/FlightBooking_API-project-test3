@@ -11,13 +11,31 @@ function BookFlightPage() {
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
 
+        if (passengerName.trim().length < 2) {
+            setMessage("Passenger name must be at least 2 characters.");
+            return;
+        }
+
+        if (!passengerEmail.includes("@")) {
+            setMessage("Please enter a valid email address.");
+            return;
+        }
+
+        const confirmBooking = window.confirm(
+            `Are you sure you want to book this flight for ${passengerName}?`
+        );
+
+        if (!confirmBooking) {
+            setMessage("Booking cancelled.");
+            return;
+        }
+
         const bookingData = {
-            flightId: Number(flightId),
             passengerName,
             passengerEmail,
         };
 
-        fetch(`http://localhost:8080/api/flights/${flightId}/book`,{
+        fetch(`http://localhost:8080/api/flights/${flightId}/book`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -70,7 +88,7 @@ function BookFlightPage() {
                 <button type="submit">Confirm booking</button>
             </form>
 
-            {message && <p>{message}</p>}
+            {message && <p className="message">{message}</p>}
         </div>
     );
 }

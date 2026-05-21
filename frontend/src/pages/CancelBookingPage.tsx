@@ -58,7 +58,7 @@ function CancelBookingPage() {
                 <button type="submit">Cancel booking</button>
             </form>
 
-            {message && <p>{message}</p>}
+            {message && <p className="message">{message}</p>}
         </div>
     );
 }
