@@ -67,6 +67,21 @@ public class AssistantController {
         return new ChatResponse(reply);
     }
 
+    private String searchAvailableFlights() {
+        return "Available flights can be searched using the existing /api/flights/available endpoint.";
+    }
+
+    private String bookFlight(Long flightId, String passengerName, String passengerEmail) {
+        return "Booking request received for flight " + flightId
+                + ", passenger " + passengerName
+                + ", email " + passengerEmail;
+    }
+
+    private String cancelBooking(Long flightId, String passengerEmail) {
+        return "Cancel request received for flight " + flightId
+                + ", email " + passengerEmail;
+    }
+
     public record ChatRequest(String message) {}
 
     public record ChatMessage(String role, String content) {}
