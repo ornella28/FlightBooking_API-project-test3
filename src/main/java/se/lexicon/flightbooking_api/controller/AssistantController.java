@@ -25,6 +25,13 @@ public class AssistantController {
     @PostMapping("/chat")
     public ChatResponse chat(@RequestBody ChatRequest request) {
 
+        String userMessage = request.message().toLowerCase();
+
+        if (userMessage.contains("available flights") || userMessage.contains("search flights")) {
+            String toolResult = searchAvailableFlights();
+            return new ChatResponse(toolResult);
+        }
+
         chatHistory.add(new ChatMessage("user", request.message()));
 
         if (chatHistory.size() > 10) {
