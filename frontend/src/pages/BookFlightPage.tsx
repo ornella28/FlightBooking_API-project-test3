@@ -1,12 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import type { Flight } from "../types";
+
+function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
 
 function BookFlightPage() {
     const { flightId } = useParams();
 
+    const [flight, setFlight] = useState<Flight | null>(null);
     const [passengerName, setPassengerName] = useState("");
     const [passengerEmail, setPassengerEmail] = useState("");
     const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [bookingCompleted, setBookingCompleted] = useState(false);
+
+    useEffect(() => {
+        fetch("http://localhost:8080/api/flights")
+            .then((response) => response.json())
+            .then((data) => {
+                const selectedFlight = data.find(
+                    (flight: Flight) => flight.id === Number(flightId)
+                );
+
+                setFlight(selectedFlight);
+            })
+            .catch(() => {
+                setMessage("Could not load flight information.");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [flightId]);
 
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
@@ -22,7 +54,7 @@ function BookFlightPage() {
         }
 
         const confirmBooking = window.confirm(
-            `Are you sure you want to book this flight for ${passengerName}?`
+            `Are you sure you want to book flight ${flight?.flightNumber} to ${flight?.destination}?`
         );
 
         if (!confirmBooking) {
@@ -49,18 +81,44 @@ function BookFlightPage() {
                 return response.json();
             })
             .then(() => {
-                setMessage("Booking successful!");
-                setPassengerName("");
-                setPassengerEmail("");
+                setBookingCompleted(true);
+                setMessage("Flight booked successfully!");
             })
             .catch(() => {
                 setMessage("Something went wrong. Booking was not completed.");
             });
     }
 
+    if (loading) return <p>Loading flight information...</p>;
+
+    if (bookingCompleted) {
+        return (
+            <div className="card">
+                <h2>Booking Confirmed</h2>
+
+                <p className="message">
+                    Flight booked successfully!
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div>
-            <h2>Book Flight</h2>
+            <h2 className="page-title">Book Flight</h2>
+
+            {flight && (
+                <div className="card">
+                    <h3>{flight.destination}</h3>
+                    <p>Flight number: {flight.flightNumber}</p>
+                    <p>Departure: {formatDate(flight.departureTime)}</p>
+                    <p>Arrival: {formatDate(flight.arrivalTime)}</p>
+                    <p>Price: {flight.price} kr</p>
+                    <p>
+                        Status: <span className="status">{flight.status || "Available"}</span>
+                    </p>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div>

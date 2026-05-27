@@ -124,3 +124,11 @@ input {
   background: #e0f2fe;
   border-radius: 10px;
 }
+
+.cancel-button {
+  background: #dc2626;
+}
+
+.cancel-button:hover {
+  background: #991b1b;
+}

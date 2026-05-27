@@ -4,7 +4,7 @@ import FlightsPage from "./pages/FlightsPages.tsx";
 import AvailableFlightsPage from "./pages/AvailableFlightsPage.tsx";
 import BookFlightPage from "./pages/BookFlightPage.tsx";
 import BookingsPage from "./pages/BookingsPage.tsx";
-import CancelBookingPage from "./pages/CancelBookingPage.tsx";
+
 
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
                   <Route path="/available-flights" element={<AvailableFlightsPage />} />
                   <Route path="/book-flight/:flightId" element={<BookFlightPage />} />
                   <Route path="/bookings" element={<BookingsPage />} />
-                  <Route path="/cancel-booking" element={<CancelBookingPage />} />
+
               </Routes>
           </div>
       </BrowserRouter>
