@@ -6,6 +6,8 @@ import com.openai.models.ChatModel;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import org.springframework.web.bind.annotation.*;
+import se.lexicon.flightbooking_api.dto.AvailableFlightDTO;
+import se.lexicon.flightbooking_api.service.FlightBookingService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,12 @@ public class AssistantController {
     private final OpenAIClient client = OpenAIOkHttpClient.fromEnv();
 
     private final List<ChatMessage> chatHistory = new ArrayList<>();
+
+    private final FlightBookingService flightBookingService;
+
+    public AssistantController(FlightBookingService flightBookingService) {
+        this.flightBookingService = flightBookingService;
+    }
 
 
 
@@ -75,7 +83,31 @@ public class AssistantController {
     }
 
     private String searchAvailableFlights() {
-        return "Available flights can be searched using the existing /api/flights/available endpoint.";
+        List<AvailableFlightDTO> flights = flightBookingService.findAvailableFlights();
+
+        if (flights.isEmpty()) {
+            return "There are currently no available flights.";
+        }
+
+        StringBuilder result = new StringBuilder("Here are the available flights:\n");
+
+        for (AvailableFlightDTO flight : flights) {
+            result.append("- Flight ID: ")
+                    .append(flight.id())
+                    .append(", Flight number: ")
+                    .append(flight.flightNumber())
+                    .append(", Destination: ")
+                    .append(flight.destination())
+                    .append(", Departure: ")
+                    .append(flight.departureTime())
+                    .append(", Arrival: ")
+                    .append(flight.arrivalTime())
+                    .append(", Price: ")
+                    .append(flight.price())
+                    .append(" kr\n");
+        }
+
+        return result.toString();
     }
 
     private String bookFlight(Long flightId, String passengerName, String passengerEmail) {
