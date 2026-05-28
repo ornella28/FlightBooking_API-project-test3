@@ -7,6 +7,7 @@ import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import org.springframework.web.bind.annotation.*;
 import se.lexicon.flightbooking_api.dto.AvailableFlightDTO;
+import se.lexicon.flightbooking_api.dto.BookFlightRequestDTO;
 import se.lexicon.flightbooking_api.service.FlightBookingService;
 
 import java.util.ArrayList;
@@ -35,10 +36,16 @@ public class AssistantController {
 
         String userMessage = request.message().toLowerCase();
 
+        if (userMessage.startsWith("book flight")) {
+            return handleBookingRequest(request.message());
+        }
+
         if (userMessage.contains("available flights") || userMessage.contains("search flights")) {
             String toolResult = searchAvailableFlights();
             return new ChatResponse(toolResult);
         }
+
+
 
         if (userMessage.contains("book flight") || userMessage.contains("book a flight")) {
             return new ChatResponse(
@@ -104,6 +111,36 @@ public class AssistantController {
         return new ChatResponse(reply);
     }
 
+    private ChatResponse handleBookingRequest(String message) {
+        try {
+            String[] parts = message.split("for");
+
+            Long flightId = Long.parseLong(
+                    parts[0].replaceAll("[^0-9]", "")
+            );
+
+            String passengerInfo = parts[1].trim();
+
+            String[] passengerParts = passengerInfo.split(",");
+
+            String passengerName = passengerParts[0].trim();
+            String passengerEmail = passengerParts[1].trim();
+
+            String result = bookFlight(flightId, passengerName, passengerEmail);
+
+            return new ChatResponse(result);
+
+        } catch (Exception e) {
+            return new ChatResponse(
+                    """
+                    I can help you book the flight, but I need the information in this format:
+    
+                    Book flight 3 for Anna Svensson, anna@email.com
+                    """
+            );
+        }
+    }
+
     private String searchAvailableFlights() {
         List<AvailableFlightDTO> flights = flightBookingService.findAvailableFlights();
 
@@ -133,9 +170,24 @@ public class AssistantController {
     }
 
     private String bookFlight(Long flightId, String passengerName, String passengerEmail) {
-        return "Booking request received for flight " + flightId
-                + ", passenger " + passengerName
-                + ", email " + passengerEmail;
+        try {
+            BookFlightRequestDTO request = new BookFlightRequestDTO(
+                    passengerName,
+                    passengerEmail
+            );
+
+            var booking = flightBookingService.bookFlight(flightId, request);
+
+            return "Flight booked successfully for "
+                    + booking.passengerName()
+                    + ". Flight number: "
+                    + booking.flightNumber()
+                    + ", destination: "
+                    + booking.destination()
+                    + ".";
+        } catch (Exception e) {
+            return "Sorry, I could not complete the booking. " + e.getMessage();
+        }
     }
 
     private String cancelBooking(Long flightId, String passengerEmail) {
