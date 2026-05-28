@@ -40,6 +40,28 @@ public class AssistantController {
             return new ChatResponse(toolResult);
         }
 
+        if (userMessage.contains("book flight") || userMessage.contains("book a flight")) {
+            return new ChatResponse(
+                    """
+                    I can help you book a flight.
+        
+                    Please provide:
+                    - Flight ID
+                    - Passenger name
+                    - Passenger email
+        
+                    Example:
+                    Book flight 3 for Anna Svensson, anna@email.com
+                    """
+            );
+        }
+
+        if (userMessage.contains("cancel booking")) {
+            return new ChatResponse(
+                    "I can help you cancel a booking. Please provide the flight ID and passenger email."
+            );
+        }
+
         chatHistory.add(new ChatMessage("user", request.message()));
 
         if (chatHistory.size() > 10) {
