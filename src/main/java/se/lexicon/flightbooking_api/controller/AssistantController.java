@@ -8,6 +8,7 @@ import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import org.springframework.web.bind.annotation.*;
 import se.lexicon.flightbooking_api.dto.AvailableFlightDTO;
 import se.lexicon.flightbooking_api.dto.BookFlightRequestDTO;
+import se.lexicon.flightbooking_api.dto.FlightBookingDTO;
 import se.lexicon.flightbooking_api.service.FlightBookingService;
 
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class AssistantController {
 
         String userMessage = request.message().toLowerCase();
 
+        if (userMessage.contains("cancel")) {
+            return handleCancelRequest(request.message());
+        }
+
         if (userMessage.startsWith("book flight")) {
             return handleBookingRequest(request.message());
         }
@@ -43,6 +48,10 @@ public class AssistantController {
         if (userMessage.contains("available flights") || userMessage.contains("search flights")) {
             String toolResult = searchAvailableFlights();
             return new ChatResponse(toolResult);
+        }
+
+        if (userMessage.contains("booking") && userMessage.contains("@")) {
+            return handleFindBookingsByEmail(request.message());
         }
 
 
@@ -62,13 +71,7 @@ public class AssistantController {
                     """
             );
         }
-
-        if (userMessage.contains("cancel booking")) {
-            return new ChatResponse(
-                    "I can help you cancel a booking. Please provide the flight ID and passenger email."
-            );
-        }
-
+        
         chatHistory.add(new ChatMessage("user", request.message()));
 
         if (chatHistory.size() > 10) {
@@ -141,6 +144,31 @@ public class AssistantController {
         }
     }
 
+    private ChatResponse handleCancelRequest(String message) {
+        try {
+            String[] parts = message.split("for");
+
+            Long flightId = Long.parseLong(
+                    parts[0].replaceAll("[^0-9]", "")
+            );
+
+            String passengerEmail = parts[1].trim();
+
+            String result = cancelBooking(flightId, passengerEmail);
+
+            return new ChatResponse(result);
+
+        } catch (Exception e) {
+            return new ChatResponse(
+                    """
+                    I can help you cancel a booking, but I need the information in this format:
+    
+                    Cancel booking 3 for anna@email.com
+                    """
+            );
+        }
+    }
+
     private String searchAvailableFlights() {
         List<AvailableFlightDTO> flights = flightBookingService.findAvailableFlights();
 
@@ -191,8 +219,80 @@ public class AssistantController {
     }
 
     private String cancelBooking(Long flightId, String passengerEmail) {
-        return "Cancel request received for flight " + flightId
-                + ", email " + passengerEmail;
+        try {
+            flightBookingService.cancelFlight(flightId, passengerEmail);
+
+            return "Booking cancelled successfully for flight ID "
+                    + flightId
+                    + " and email "
+                    + passengerEmail
+                    + ".";
+        } catch (Exception e) {
+            return "Sorry, I could not cancel the booking. " + e.getMessage();
+        }
+    }
+
+    private String findBookingsByEmail(String email) {
+        List<FlightBookingDTO> bookings = flightBookingService.findBookingsByEmail(email);
+
+        if (bookings.isEmpty()) {
+            return "No bookings were found for " + email + ".";
+        }
+
+        StringBuilder result = new StringBuilder("Bookings found for " + email + ":\n");
+
+        for (FlightBookingDTO booking : bookings) {
+            result.append("- Flight ID: ")
+                    .append(booking.id())
+                    .append(", Passenger: ")
+                    .append(booking.passengerName())
+                    .append(", Flight number: ")
+                    .append(booking.flightNumber())
+                    .append(", Destination: ")
+                    .append(booking.destination())
+                    .append(", Departure: ")
+                    .append(booking.departureTime())
+                    .append(", Arrival: ")
+                    .append(booking.arrivalTime())
+                    .append(", Status: ")
+                    .append(booking.status())
+                    .append("\n");
+        }
+
+        return result.toString();
+    }
+
+    private String extractEmail(String message) {
+        String[] words = message.split("\\s+");
+
+        for (String word : words) {
+            if (word.contains("@")) {
+                return word.replace(",", "").trim();
+            }
+        }
+
+        throw new IllegalArgumentException("No email found.");
+    }
+
+    private ChatResponse handleFindBookingsByEmail(String message) {
+        try {
+            String email = extractEmail(message);
+
+            String result = findBookingsByEmail(email);
+
+            return new ChatResponse(result);
+
+        } catch (Exception e) {
+            return new ChatResponse(
+                    """
+                    I can help you find bookings by email.
+    
+                    Please write your request like this:
+    
+                    Show bookings for anna@email.com
+                    """
+            );
+        }
     }
 
     public record ChatRequest(String message) {}
