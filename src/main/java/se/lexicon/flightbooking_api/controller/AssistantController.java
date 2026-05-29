@@ -1,24 +1,10 @@
 package se.lexicon.flightbooking_api.controller;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.models.ChatModel;
-import com.openai.models.chat.completions.ChatCompletion;
-import com.openai.models.chat.completions.ChatCompletionCreateParams;
-import org.springframework.web.bind.annotation.*;
-import se.lexicon.flightbooking_api.dto.AvailableFlightDTO;
-import se.lexicon.flightbooking_api.dto.BookFlightRequestDTO;
-import se.lexicon.flightbooking_api.dto.FlightBookingDTO;
-import se.lexicon.flightbooking_api.service.FlightBookingService;
+import com.openai.client.OpenAIClient;import com.openai.client.okhttp.OpenAIOkHttpClient;import com.openai.models.ChatModel;import com.openai.models.chat.completions.ChatCompletion;import com.openai.models.chat.completions.ChatCompletionCreateParams;import org.springframework.web.bind.annotation.*;import se.lexicon.flightbooking_api.dto.AvailableFlightDTO;import se.lexicon.flightbooking_api.dto.BookFlightRequestDTO;import se.lexicon.flightbooking_api.dto.FlightBookingDTO;import se.lexicon.flightbooking_api.service.FlightBookingService;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayList;import java.util.List;
 
-
-@RestController
-@RequestMapping("/api/assistant")
-@CrossOrigin(origins = "http://localhost:5173")
-public class AssistantController {
+@RestController@RequestMapping("/api/assistant")@CrossOrigin(origins = "http://localhost:5173")public class AssistantController {
 
     private final OpenAIClient client = OpenAIOkHttpClient.fromEnv();
 
@@ -37,39 +23,42 @@ public class AssistantController {
 
         String userMessage = request.message().toLowerCase();
 
-        if (userMessage.contains("cancel")) {
-            return handleCancelRequest(request.message());
-        }
+        String intent = detectIntent(request.message());
 
-        if (userMessage.startsWith("book flight")) {
-            return handleBookingRequest(request.message());
-        }
-
-        if (userMessage.contains("available flights") || userMessage.contains("search flights")) {
+        if (intent.equals("SEARCH_AVAILABLE_FLIGHTS")) {
             String toolResult = searchAvailableFlights();
-            return new ChatResponse(toolResult);
+            String reply = formatToolResultForUser(request.message(), toolResult);
+            return new ChatResponse(reply);
         }
 
-        if (userMessage.contains("booking") && userMessage.contains("@")) {
-            return handleFindBookingsByEmail(request.message());
+        if (intent.equals("FIND_BOOKINGS_BY_EMAIL")) {
+            ChatResponse toolResponse = handleFindBookingsByEmail(request.message());
+            String reply = formatToolResultForUser(request.message(), toolResponse.reply());
+            return new ChatResponse(reply);
         }
 
+        if (intent.equals("BOOK_FLIGHT")) {
+            if (request.message().contains("@")) {
+                return handleBookingRequest(request.message());
+            }
 
+            return new ChatResponse("""
+        I can help you book a flight.
 
-        if (userMessage.contains("book flight") || userMessage.contains("book a flight")) {
-            return new ChatResponse(
-                    """
-                    I can help you book a flight.
-        
-                    Please provide:
-                    - Flight ID
-                    - Passenger name
-                    - Passenger email
-        
-                    Example:
-                    Book flight 3 for Anna Svensson, anna@email.com
-                    """
-            );
+        Please provide:
+        - Flight ID
+        - Passenger name
+        - Passenger email
+
+        Example:
+        Book flight 3 for Anna Svensson, anna@email.com
+        """);
+        }
+
+        if (intent.equals("CANCEL_BOOKING")) {
+            ChatResponse toolResponse = handleCancelRequest(request.message());
+            String reply = formatToolResultForUser(request.message(), toolResponse.reply());
+            return new ChatResponse(reply);
         }
 
         chatHistory.add(new ChatMessage("user", request.message()));
@@ -81,11 +70,12 @@ public class AssistantController {
         ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(ChatModel.GPT_4_1_MINI)
                 .addSystemMessage("""
-                    You are a helpful flight reservation assistant.
-                    Help users search flights, book flights, and cancel bookings.
-                    Be clear, friendly, and ask for missing information when needed.
-                    Keep answers short and practical.
-                    """);
+                You are a helpful flight reservation assistant.
+                Help users search flights, book flights, and cancel bookings.
+                Be clear, friendly, and ask for missing information when needed.
+                Keep answers short and practical.
+                
+                """);
 
         for (ChatMessage message : chatHistory) {
             if (message.role().equals("user")) {
@@ -169,6 +159,76 @@ public class AssistantController {
         }
     }
 
+    private String detectIntent(String message) {
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .model(ChatModel.GPT_4_1_MINI)
+                .addSystemMessage("""
+                You classify flight assistant requests.
+
+                Return only one of these exact labels:
+                SEARCH_AVAILABLE_FLIGHTS
+                FIND_BOOKINGS_BY_EMAIL
+                BOOK_FLIGHT
+                CANCEL_BOOKING
+                GENERAL_CHAT
+
+                Understand any language.
+                Do not explain.
+                """)
+                .addUserMessage(message)
+                .build();
+
+        ChatCompletion completion = client.chat().completions().create(params);
+
+        return completion.choices()
+                .getFirst()
+                .message()
+                .content()
+                .orElse("GENERAL_CHAT")
+                .trim();
+    }
+
+    private String formatToolResultForUser(String userMessage, String toolResult) {
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .model(ChatModel.GPT_4_1_MINI)
+                .addSystemMessage("""
+                You are a helpful flight reservation assistant.
+
+                Detect the language of the user message.
+                Reply ONLY in the same language as the user.
+                Do not mix languages.
+
+                Format the answer using this style:
+                - Short intro sentence
+                - One separated block per flight or booking
+                - Use the ✈️ emoji for each flight/booking
+                - Keep line breaks
+                - Keep separator lines like ------------------------
+                - Keep all IDs, emails, passenger names, prices, dates, destinations and statuses unchanged
+                - Do not invent information
+                - Do not write long paragraphs
+
+                Translate only the labels, for example:
+                Flight ID, Flight number, Destination, Departure, Arrival, Price, Status, Passenger, Email.
+                """)
+                .addUserMessage("""
+                User message:
+                %s
+
+                Tool result:
+                %s
+                """.formatted(userMessage, toolResult))
+                .build();
+
+        ChatCompletion completion = client.chat().completions().create(params);
+
+        return completion.choices()
+                .getFirst()
+                .message()
+                .content()
+                .orElse(toolResult);
+    }
+
     private String searchAvailableFlights() {
         List<AvailableFlightDTO> flights = flightBookingService.findAvailableFlights();
 
@@ -180,15 +240,15 @@ public class AssistantController {
 
         for (AvailableFlightDTO flight : flights) {
             result.append("""
-        
-        ✈️ Flight ID: %d
-        Flight number: %s
-        Destination: %s
-        Departure: %s
-        Arrival: %s
-        Price: %.2f kr
-        ------------------------
-        """.formatted(
+    
+    ✈️ Flight ID: %d
+    Flight number: %s
+    Destination: %s
+    Departure: %s
+    Arrival: %s
+    Price: %.2f kr
+    ------------------------
+    """.formatted(
                     flight.id(),
                     flight.flightNumber(),
                     flight.destination(),
@@ -247,17 +307,17 @@ public class AssistantController {
 
         for (FlightBookingDTO booking : bookings) {
             result.append("""
-            
-            ✈️ Flight ID: %d
-            Passenger: %s
-            Email: %s
-            Flight number: %s
-            Destination: %s
-            Departure: %s
-            Arrival: %s
-            Status: %s
-            ------------------------
-            """.formatted(
+        
+        ✈️ Flight ID: %d
+        Passenger: %s
+        Email: %s
+        Flight number: %s
+        Destination: %s
+        Departure: %s
+        Arrival: %s
+        Status: %s
+        ------------------------
+        """.formatted(
                     booking.id(),
                     booking.passengerName(),
                     booking.passengerEmail(),
@@ -310,4 +370,5 @@ public class AssistantController {
     public record ChatMessage(String role, String content) {}
 
     public record ChatResponse(String reply) {}
+
 }

@@ -118,6 +118,19 @@ input {
   border: 1px solid #cbd5e1;
 }
 
+.booking-page {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.booking-card {
+  margin-bottom: 20px;
+}
+
+.booking-form {
+  max-width: 650px;
+}
+
 .message {
   margin-top: 16px;
   padding: 12px;

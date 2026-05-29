@@ -104,11 +104,11 @@ function BookFlightPage() {
     }
 
     return (
-        <div>
+        <div className="booking-page">
             <h2 className="page-title">Book Flight</h2>
 
             {flight && (
-                <div className="card">
+                <div className="card booking-card">
                     <h3>{flight.destination}</h3>
                     <p>Flight number: {flight.flightNumber}</p>
                     <p>Departure: {formatDate(flight.departureTime)}</p>
@@ -120,7 +120,7 @@ function BookFlightPage() {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form className="booking-form" onSubmit={handleSubmit}>
                 <div>
                     <label>Passenger name</label>
                     <br />
