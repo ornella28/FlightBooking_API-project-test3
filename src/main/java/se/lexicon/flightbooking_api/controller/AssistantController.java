@@ -71,7 +71,7 @@ public class AssistantController {
                     """
             );
         }
-        
+
         chatHistory.add(new ChatMessage("user", request.message()));
 
         if (chatHistory.size() > 10) {
@@ -179,19 +179,23 @@ public class AssistantController {
         StringBuilder result = new StringBuilder("Here are the available flights:\n");
 
         for (AvailableFlightDTO flight : flights) {
-            result.append("- Flight ID: ")
-                    .append(flight.id())
-                    .append(", Flight number: ")
-                    .append(flight.flightNumber())
-                    .append(", Destination: ")
-                    .append(flight.destination())
-                    .append(", Departure: ")
-                    .append(flight.departureTime())
-                    .append(", Arrival: ")
-                    .append(flight.arrivalTime())
-                    .append(", Price: ")
-                    .append(flight.price())
-                    .append(" kr\n");
+            result.append("""
+        
+        ✈️ Flight ID: %d
+        Flight number: %s
+        Destination: %s
+        Departure: %s
+        Arrival: %s
+        Price: %.2f kr
+        ------------------------
+        """.formatted(
+                    flight.id(),
+                    flight.flightNumber(),
+                    flight.destination(),
+                    flight.departureTime(),
+                    flight.arrivalTime(),
+                    flight.price()
+            ));
         }
 
         return result.toString();
@@ -242,21 +246,27 @@ public class AssistantController {
         StringBuilder result = new StringBuilder("Bookings found for " + email + ":\n");
 
         for (FlightBookingDTO booking : bookings) {
-            result.append("- Flight ID: ")
-                    .append(booking.id())
-                    .append(", Passenger: ")
-                    .append(booking.passengerName())
-                    .append(", Flight number: ")
-                    .append(booking.flightNumber())
-                    .append(", Destination: ")
-                    .append(booking.destination())
-                    .append(", Departure: ")
-                    .append(booking.departureTime())
-                    .append(", Arrival: ")
-                    .append(booking.arrivalTime())
-                    .append(", Status: ")
-                    .append(booking.status())
-                    .append("\n");
+            result.append("""
+            
+            ✈️ Flight ID: %d
+            Passenger: %s
+            Email: %s
+            Flight number: %s
+            Destination: %s
+            Departure: %s
+            Arrival: %s
+            Status: %s
+            ------------------------
+            """.formatted(
+                    booking.id(),
+                    booking.passengerName(),
+                    booking.passengerEmail(),
+                    booking.flightNumber(),
+                    booking.destination(),
+                    booking.departureTime(),
+                    booking.arrivalTime(),
+                    booking.status()
+            ));
         }
 
         return result.toString();

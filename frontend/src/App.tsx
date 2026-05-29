@@ -4,6 +4,7 @@ import FlightsPage from "./pages/FlightsPages.tsx";
 import AvailableFlightsPage from "./pages/AvailableFlightsPage.tsx";
 import BookFlightPage from "./pages/BookFlightPage.tsx";
 import BookingsPage from "./pages/BookingsPage.tsx";
+import ChatbotPage from "./pages/ChatbotPage.tsx";
 
 
 
@@ -23,6 +24,7 @@ function App() {
                   <Route path="/available-flights" element={<AvailableFlightsPage />} />
                   <Route path="/book-flight/:flightId" element={<BookFlightPage />} />
                   <Route path="/bookings" element={<BookingsPage />} />
+                  <Route path="/assistant" element={<ChatbotPage />} />
 
               </Routes>
           </div>
