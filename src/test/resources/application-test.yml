@@ -1,9 +1,31 @@
 spring:
+  application:
+    name: FlightBooking_API
+
+  ai:
+    retry:
+      max-attempts: 1
+
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o
+          max-tokens: 1024
+          temperature: 0.2
+
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+
   datasource:
     url: jdbc:h2:mem:flight-booking-test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
