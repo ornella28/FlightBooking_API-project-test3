@@ -7,18 +7,12 @@ spring:
       max-attempts: 1
 
     openai:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${SPRING_AI_OPENAI_API_KEY}
       chat:
         options:
           model: gpt-4o
           max-tokens: 1024
           temperature: 0.2
-
-    chat:
-      memory:
-        repository:
-          jdbc:
-            initialize-schema: always
 
   datasource:
     url: jdbc:h2:mem:flight-booking-test;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -34,6 +28,6 @@ spring:
 
 springdoc:
   api-docs:
-    enabled: false
+    enabled: true
   swagger-ui:
-    enabled: false
+    enabled: true

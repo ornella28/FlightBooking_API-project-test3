@@ -34,8 +34,10 @@ function ChatbotPage() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ message: input }),
+            },body: JSON.stringify({
+                chatId: "main-chat",
+                message: input,
+            }),
         })
             .then((response) => {
                 if (!response.ok) {
